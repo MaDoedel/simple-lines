@@ -1,5 +1,7 @@
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
+from matplotlib import collections  as mc
+import pylab as pl
 import numpy as np
 
 
@@ -31,7 +33,7 @@ class Line:
 # Indead, we have to lookup the following leafs for each insert
 
 # for the sace of simplicity I will just make a list of lists...
-all_lines = [[]]
+all_lines = []
 
 # Lets first see what Im dealing with
 plt.figure()
@@ -40,19 +42,31 @@ plt.ylabel('Y')
 plt.title('Line Segments')
 plt.grid(True)
 
+lines = []
+
 for line in file:
-  # Reason why I prefer python for quick scatches... basically everything works just fine
-  x1, y1, x2, y2 = line.split(" ")
+    # Reason why I prefer python for quick sketches... basically everything works just fine
+    x1, y1, x2, y2 = line.split()
 
-  # Technically, the input here currently is a string unless we convert it to a number, which is highly recommended for euklidian distance
-  all_lines.append([Line(Point(float(x1), float(y1)), Point(float(x2), float(y2)))])
+    # Technically, the input here currently is a string unless we convert it to a number, which is highly recommended for Euclidean distance
+    lines.append([(float(x1), float(y1)), (float(x2), float(y2))])
+    all_lines.append([Line(Point(float(x1), float(y1)), Point(float(x2), float(y2)))])
 
-  # Personaly, I would build a 
-  plt.plot([x1, x2], [y1, y2], marker='o')
-  print(f'{x1} {y1} {x2} {y2}')
-plt.savefig('initial_plot.png')
-plt.close()
+    # Print the coordinates for debugging
+    print(f'{x1} {y1} {x2} {y2}')
 
+# Define colors for each line
+c = np.array([(1, 0, 0, 1), (0, 1, 0, 1), (0, 0, 1, 1)])  # Modify to match the number of lines if necessary
+
+# Create LineCollection
+lc = mc.LineCollection(lines, colors=c, linewidths=2)
+
+# Plotting
+fig, ax = plt.subplots()
+ax.add_collection(lc)
+ax.autoscale()
+ax.margins(0.1)
+fig.savefig('initial_plot.png')
 
 # We could start considering each line to be a concunction
 changed = True
