@@ -105,8 +105,7 @@ for linegement in all_lines:
         print(f"Start: ({line.p1.x}, {line.p1.y}), End: ({line.p2.x}, {line.p2.y})")
 
 # Generate a list of colors
-num_segments = sum(len(linegement) for linegement in all_lines)
-colors = cm.rainbow(np.linspace(0, 1, num_segments))
+colors = cm.rainbow(np.linspace(0, 1, len(all_lines) ))
 
 # Plot all line segments with different colors
 plt.figure()
@@ -118,8 +117,8 @@ plt.grid(True)
 color_index = 0
 for linegement in all_lines:
     for line in linegement:
-        plt.plot([line.p1.x, line.p2.x], [line.p1.y, line.p2.y], marker='o', color=colors[color_index])
-        color_index += 1
+      plt.plot([line.p1.x, line.p2.x], [line.p1.y, line.p2.y], marker='o', color=colors[color_index])
+    color_index += 1
 
 plt.savefig('processed_plot.png')
 plt.close()
