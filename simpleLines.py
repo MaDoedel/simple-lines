@@ -3,6 +3,7 @@ import matplotlib.cm as cm
 from matplotlib import collections  as mc
 import pylab as pl
 import numpy as np
+import random
 
 
 # We are parsing the input file, knowing that each line follows a specific language specification
@@ -18,6 +19,10 @@ class Point:
   # This could be useful
   def __eq__(self, point):
     return self.x == point.x and self.y == point.y
+  def __hash__(self):
+      return hash((self.x, self.y))
+  def __repr__(self):
+      return f"Point({self.x}, {self.y})"
 
 
 class Line:
@@ -26,113 +31,130 @@ class Line:
     self.p2 = p2
     self.length = ((p1.x - p2.x)**2 + (p1.y - p2.y)**2)**0.5 # Euclidean distance
 
+# TODO: Connect 2 lines to a linesegment, thus a single line can't be a single line
+# TODO: Print each line linesegment's length descending order
+# TODO: Display the lines in different colors
 
-# Now Arguing farom the nature of this problem, some would use the composite pattern to represent the lines and their conjunctions, calling finally calculate() at this object, which adds all line lengths
-# But: How to decide which line is a conjunction of which? Thats the actual algorithmic problem here
-# What indead breaks the deal for a simple tree structured implementation, in which each linesegment is a node and lines are leafs, is that we cant have multiple leaf candiates for a node
-# Indead, we have to lookup the following leafs for each insert
+# Some definitions for documentation reasons
+lines = []
+  
+# adjacency list approach
+vertices = []
+edges = []
+adjacencyM = {}
 
-# for the sace of simplicity I will just make a list of lists...
-all_lines = []
+for line in file:
+  x1, y1, x2, y2 = line.split(" ")
+  point1 = Point(float(x1), float(y1))
+  point2 = Point(float(x2), float(y2))
+  edges.append(Line(point1, point2))
+  lines.append([(float(x1), float(y1)), (float(x2), float(y2))])
 
-# Lets first see what Im dealing with
+  if point1 not in vertices:
+    vertices.append(point1)
+  if point2 not in vertices:
+    vertices.append(point2)
+
 plt.figure()
 plt.xlabel('X')
 plt.ylabel('Y')
 plt.title('Line Segments')
 plt.grid(True)
-
-lines = []
-
-for line in file:
-    # Reason why I prefer python for quick sketches... basically everything works just fine
-    x1, y1, x2, y2 = line.split()
-
-    # Technically, the input here currently is a string unless we convert it to a number, which is highly recommended for Euclidean distance
-    lines.append([(float(x1), float(y1)), (float(x2), float(y2))])
-    all_lines.append([Line(Point(float(x1), float(y1)), Point(float(x2), float(y2)))])
-
-    # Print the coordinates for debugging
-    print(f'{x1} {y1} {x2} {y2}')
-
-# Define colors for each line
-c = np.array([(1, 0, 0, 1), (0, 1, 0, 1), (0, 0, 1, 1)])  # Modify to match the number of lines if necessary
-
-# Create LineCollection
+c = np.array([(1, 0, 0, 1), (0, 1, 0, 1), (0, 0, 1, 1)])  
 lc = mc.LineCollection(lines, colors=c, linewidths=2)
-
-# Plotting
 fig, ax = plt.subplots()
 ax.add_collection(lc)
 ax.autoscale()
 ax.margins(0.1)
 fig.savefig('initial_plot.png')
 
-# We could start considering each line to be a concunction
-changed = True
-while changed:
-  changed = False
-  for index, linegement in enumerate(all_lines):
-    if not linegement:  # Skip empty lists
+
+# Create adjacency matrix
+for point in vertices:
+    adjacencyM[point] = []
+
+for edge in edges:
+  adjacencyM[edge.p1].append(edge.p2)
+  adjacencyM[edge.p2].append(edge.p1)
+
+# Identify line segments
+lineSegmentCandidates = []
+for point, neighboringPoint in adjacencyM.items():
+  # Is technically a starter/end
+  if len(neighboringPoint) == 1:
+    lineSegmentCandidates.append(point)
+  # Is a starter/end
+  if len(neighboringPoint) > 2:
+    lineSegmentCandidates.append(point)
+
+lineSegments = []
+
+#  this took quiet some time
+def walkLineSegment(startPoint, adjacencyM, lineSegmentCandidates, visited):
+  segments = []
+  stack = [(startPoint, [startPoint])]
+  
+  while stack:
+      current, path = stack.pop()
+      if current not in visited:
+          visited.add(current)
+          neighbors = adjacencyM[current]
+          for neighbor in neighbors:
+              if neighbor in visited:
+                  continue
+              new_path = path + [neighbor]
+              if neighbor in lineSegmentCandidates:
+                  segments.append(new_path)
+              elif len(adjacencyM[neighbor]) == 2:
+                  stack.append((neighbor, new_path))
+              else:
+                  segments.append(new_path)
+  return segments
+
+lineSegments = []
+visited = set()
+for startPoint in lineSegmentCandidates:
+    if startPoint not in visited:
+        segments = walkLineSegment(startPoint, adjacencyM, lineSegmentCandidates, visited)
+        lineSegments.extend(segments)
+
+#print(lineSegments)
+
+# Rework the result to handle potential inversions or duplications and short linesegments
+reworkedLineSegments = []
+for segment in lineSegments:
+    if len(segment) < 3:
       continue
+    reworkedLineSegments.append(segment)
 
-    start = linegement[0].p1
-    end = linegement[-1].p2
-
-    candidates_start = []
-    candidates_end = []
-
-    for yndex, other_line in enumerate(all_lines):
-      # safe one cycle I guess
-      if index == yndex:
-        continue
-
-      if not other_line:  # Skip empty lists
-        continue
-
-      ystart = other_line[0].p1
-      yend = other_line[-1].p2
-
-      # can we connect something with the start?
-      if (yend == start) or (ystart == start):
-        candidates_start.append(yndex)
-      if (yend == end) or (ystart == end):
-        candidates_end.append(yndex)
+for segment in reworkedLineSegments:
+   for index, other_segment in enumerate(reworkedLineSegments):
+      if segment == other_segment[::-1]:
+         reworkedLineSegments.remove(other_segment)
     
-    # can I connect some lines/linesegments? Of course, if their start and end correspond only to the ones of another line/linesegment
-    if len(candidates_start) == 1:
-      linesegment = all_lines[candidates_start[0]] + linegement
-      all_lines[index] = linesegment
-      all_lines[candidates_start[0]] = []
-      changed = True
+# Prepare the segments for LineCollection
+lines = []
+for segment in reworkedLineSegments:
+    line = [(point.x, point.y) for point in segment]
+    lines.append(line)
 
-    if len(candidates_end) == 1:
-      linesegment = linegement + all_lines[candidates_end[0]]
-      all_lines[index] = linesegment
-      all_lines[candidates_end[0]] = []
-      changed = True
-all_lines = [line for line in all_lines if line]
+# Color array for the segments
+colors = [(random.random(), random.random(), random.random()) for _ in lines]
 
-# Print all line segments
-for linegement in all_lines:
-    for line in linegement:
-        print(f"Start: ({line.p1.x}, {line.p1.y}), End: ({line.p2.x}, {line.p2.y})")
+# Plotting using LineCollection
+lc = mc.LineCollection(lines, colors=colors, linewidths=2)
+fig, ax = plt.subplots()
+ax.add_collection(lc)
+ax.autoscale()
+ax.margins(0.1)
+fig.savefig('reworked_plot.png')
 
-# Generate a list of colors
-colors = cm.rainbow(np.linspace(0, 1, len(all_lines) ))
+segment_lengths = []
+for segment in reworkedLineSegments:
+  sum = 0
+  for i in range(len(segment) - 1):
+    sum+= Line(segment[i], segment[i+1]).length
+  segment_lengths.append((segment, sum))
 
-# Plot all line segments with different colors
-plt.figure()
-plt.xlabel('X')
-plt.ylabel('Y')
-plt.title('Processed Line Segments')
-plt.grid(True)
-
-color_index = 0
-for linegement in all_lines:
-    for line in linegement:
-      plt.plot([line.p1.x, line.p2.x], [line.p1.y, line.p2.y], marker='o', color=colors[color_index])
-    color_index += 1
-
-plt.savefig('processed_plot.png')
-plt.close()
+sorted_segment_lengths = sorted(segment_lengths, key=lambda x: x[1], reverse=True)
+print(sorted_segment_lengths)

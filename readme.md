@@ -6,6 +6,15 @@ As part of a submission, this little project contains a Python script that offer
 
 Given a list of coordinate pairs representing the start and end points of lines, two lines can be combined into a single line if one of the endpoints of one line matches an endpoint of another line. If more than two lines meet at a point, no combination occurs at that point. The input file contains one line per line segment, with each line containing four floating-point numbers separated by spaces, representing the coordinates \(X1\), \(Y1\), \(X2\), and \(Y2\).
 
+## Expectations
+
+Through this proof of concept, the input graph is refined into a star composed of three line segments.
+
+![Initial Plot](/initial_plot.png)
+![Reworked Plot](/reworked_plot.png)
+
+Lengths: 1565.53, 965.49, 636.06
+
 ## Thoughts
 
 As this task is rather straightforward, I prioritized a lightweight implementation without unnecessary complications from design patterns that might add variability or advanced parsing technologies. However, considerations of specific patterns and arguments are communicated through comments.
