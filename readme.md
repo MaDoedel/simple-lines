@@ -19,10 +19,6 @@ Lengths: 1565.53, 965.49, 636.06
 
 As this task is rather straightforward, I prioritized a lightweight implementation without unnecessary complications from design patterns that might add variability or advanced parsing technologies. However, considerations of specific patterns and arguments are communicated through comments.
 
-## Software Stack
-
-As the interviewer suggested a tendency towards adapting frontend technologies and libraries as a backend developer, I would brand this project as a React-driven. Thus, a lightweight Java web framework as the backend (for a single GET request), combined with ReactJS, should suit the needs.
-
 ## Main Function
 
 The main function performs the following steps:
