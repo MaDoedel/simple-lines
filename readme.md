@@ -13,7 +13,7 @@ Through this proof of concept, the input graph is refined into a star composed o
 ![Initial Plot](/initial_plot.png)
 ![Reworked Plot](/reworked_plot.png)
 
-Lengths: 1565.53, 965.49, 636.06
+Lengths: 1565.5286865234375, 965.494384765625, 636.0551147460938
 
 ## Thoughts
 
