@@ -18,7 +18,7 @@ import java.util.Stack;
 import java.util.List;
 import java.util.Map;
 import java.util.AbstractMap;
-import java.util.AbstractMap.SimpleEntry; // No pair in Java
+import java.util.AbstractMap.SimpleEntry; // std::pair in Java
 import java.util.Set;
 import java.util.Arrays;
 
@@ -28,39 +28,61 @@ import java.io.IOException;
 
 public class App {
 
+    /**
+     * Creates a list for each path which can be walked from the startPoint. 
+     * @param startPoint 
+     * @param adjacencyM
+     * @param lineSegmentCandidates
+     * @param visited
+     * @return List<List<Point>> segments
+     */
     public static List<List<Point>> walkLineSegment(Point startPoint, HashMap<Point, ArrayList<Point>> adjacencyM, Set<Point> lineSegmentCandidates, Set<Point> visited) {
         List<List<Point>> segments = new ArrayList<>();
-        Stack<Object[]> stack = new Stack<>();
-        stack.push(new Object[]{startPoint, new ArrayList<>(Arrays.asList(startPoint))});
+        Stack<SimpleEntry<Point, List<Point>>> stack = new Stack<>();
 
+        // Pushes pair like structure (startPoint, [startPoint]) to stack 
+        stack.push(new SimpleEntry<Point, List<Point>> (startPoint, new ArrayList<>(Arrays.asList(startPoint)))); 
+        
+        // Each stack entry symbolizes a path which can be walked from the startPoint
         while (!stack.isEmpty()) {
-            Object[] currentPair = stack.pop();
-            Point current = (Point) currentPair[0];
-            List<Point> path = (List<Point>) currentPair[1];
+            SimpleEntry<Point, List<Point>> currentPair = stack.pop();
+            Point current = currentPair.getKey();
+            List<Point> path = currentPair.getValue();
 
+            // Keep track of already visited points
             if (!visited.contains(current)) {
                 visited.add(current);
+
+                // Get neighbors of current point
                 ArrayList<Point> neighbors = adjacencyM.get(current);
 
                 for (Point neighbor : neighbors) {
+                    // If neighbor is already visited (being part of another linesegment for instance), skip it
                     if (visited.contains(neighbor)) {
                         continue;
                     }
+
+                    // Copy the already walked path and further expand it (walk in that direction) 
                     List<Point> newPath = new ArrayList<>(path);
                     newPath.add(neighbor);
-
-                    if (lineSegmentCandidates.contains(neighbor)) {
+                    
+                    // If the neighbor is already a lineSegmentCandidate (start or end point of a line) and > 2 (being a minimal possible line segment), it must be returned
+                    if (lineSegmentCandidates.contains(neighbor) && newPath.size() > 2) {
                         segments.add(newPath);
+                    // If the neighbor just connects to a single point, it gets pushed to the stack to be walked further in later iterations 
                     } else if (adjacencyM.get(neighbor).size() == 2) {
-                        stack.push(new Object[]{neighbor, newPath});
-                    } else {
-                        segments.add(newPath);
+                        stack.push(new SimpleEntry<Point, List<Point>>(neighbor, newPath));
                     }
                 }
             }
         }
         return segments;
     }
+
+    /**
+     * Main method to read the input file, build the adjacency list, traverse the line segments, print their lengths, and draw them.
+     * @param args
+     */
 
     public static void main(String[] args) {
 
@@ -75,10 +97,12 @@ public class App {
         // Adjacency list
         HashMap<Point, ArrayList<Point>> adjList = new HashMap<>();
 
-        // 1. Read file
+        // Read the input file... That could be done more elegantly with a Scanner/Parsers regarding to the provided language specification x1 y1 x2 y2
+        // One could also think about other input formats, like JSON or XML...
+
         BufferedReader reader;
         try {
-			reader = new BufferedReader(new FileReader(new File("src/main/resources/input.txt")));
+			reader = new BufferedReader(new FileReader(new File( "src/main/resources/input.txt")));
             String line;
 
             while ((line = reader.readLine())!= null) {
@@ -93,6 +117,8 @@ public class App {
 			reader.close();
 		} catch (IOException e) {
 			e.printStackTrace();
+            System.err.println("Could not read file");
+            System.exit(1);
 		}
 
         // Initialize adjacency list
@@ -114,11 +140,14 @@ public class App {
         });
 
         // Initialize lineSegments and visited
+        // linesegments [[p1, p2, p3], [p4, p5, p6], ...]
+        // visited [p1, p2, p3, p4, p5, p6, ...]
         List<List<Point>> lineSegments = new ArrayList<>();
         Set<Point> visited = new HashSet<>();
 
 
         for (Point startPoint : lineSegmentCandidates) {
+            // Avoiding to walk the same line segment twice/ vice versa
             if (!visited.contains(startPoint)) {
                 List<List<Point>> segments = walkLineSegment(startPoint, adjList, lineSegmentCandidates, visited);
                 lineSegments.addAll(segments);
@@ -126,18 +155,9 @@ public class App {
         }
 
 
-        // TODO: Segments of size 2 are no 'segments'... I should filter this within the algorithm
-        List<List<Point>> reworkedLineSegments = new ArrayList<>();
-        for (List<Point> segment : lineSegments) {
-            if (segment.size() < 3) {
-                continue;
-            }
-            reworkedLineSegments.add(segment);
-        }
-
-
+        // One would maybe think of an comopiside pattern approach, in which the length of lines is differently calculated from the length of line segments... but for now
         List<Map.Entry<List<Point>, Double>> segmentLengths = new ArrayList<>();
-        for (List<Point> segment : reworkedLineSegments) {
+        for (List<Point> segment : lineSegments) {
             double sum = 0;
             for (int i = 0; i < segment.size() - 1; i++) {
                 sum += new Line(segment.get(i), segment.get(i + 1)).getLength();
@@ -145,20 +165,20 @@ public class App {
             segmentLengths.add(new AbstractMap.SimpleEntry<>(segment, sum));
         }
 
-        // Step 2: Sort the segments based on length in descending order
+        // Sort the list of segments by length in descending order
         segmentLengths.sort((a, b) -> Double.compare(b.getValue(), a.getValue()));
 
-        // Step 3: Print the sorted segments
+        // Print the sorted segments
         for (Map.Entry<List<Point>, Double> entry : segmentLengths) {
             System.out.println("Segment: " + entry.getKey() + ", Length: " + entry.getValue());
         }
 
-                // Step 4: Draw the segments
+        // Step 4: Draw the segments in cartesian coordinate system
         SwingUtilities.invokeLater(() -> {
             JFrame frame = new JFrame("Line Segments");
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             frame.setSize(1024, 1024);
-            frame.add(new DrawingPanel(reworkedLineSegments));
+            frame.add(new DrawingPanel(lineSegments));
             frame.setVisible(true);
         });
 

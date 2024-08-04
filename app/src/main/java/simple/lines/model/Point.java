@@ -1,5 +1,7 @@
 package simple.lines.model;
 
+import java.util.Objects;
+
 public class Point {
     private float x;
     private float y;
@@ -38,10 +40,12 @@ public class Point {
 
     @Override
     public int hashCode() {
-        // I hope this distribution is good enough
-        int result = 17;
-        result = 31 * result + Float.floatToIntBits(x);
-        result = 31 * result + Float.floatToIntBits(y);
-        return result;
+        // I think this distribution is good enough for this use case, 
+        // why 31? = https://stackoverflow.com/questions/299304/why-does-javas-hashcode-in-string-use-31-as-a-multiplier
+        // int result = 17;
+        // result = 31 * result + Objects.hashCode(x);
+        // result = 31 * result + Objects.hashCode(y);
+        
+        return Objects.hash(x, y);
     }
 }

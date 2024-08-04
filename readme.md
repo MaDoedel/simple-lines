@@ -1,6 +1,6 @@
 # Simple-line
 
-As part of a submission, this little project contains a Python script that offers a possible solution approach as a proof of concept, alongside the Java project implementation as the final solution.
+As part of a submission, this project contains a Python script that offers a possible solution approach as a proof of concept, alongside the Java project implementation as the final solution.
 
 ## Task
 
@@ -22,3 +22,27 @@ As this task is rather straightforward, I prioritized a lightweight implementati
 ## Software Stack
 
 As the interviewer suggested a tendency towards adapting frontend technologies and libraries as a backend developer, I would brand this project as a React-driven. Thus, a lightweight Java web framework as the backend (for a single GET request), combined with ReactJS, should suit the needs.
+
+## Main Function
+
+The main function performs the following steps:
+
+1. **Read the Input File**: The input file is read from the `src/main/resources` directory, and each line is parsed to extract the coordinates of the line segments.
+2. **Build the Adjacency List**: An adjacency list is constructed to represent the graph of line segments.
+3. **Traverse the Line Segments**: The line segments are traversed to identify and combine segments that can be merged based on the given criteria.
+4. **Print the Lengths**: The lengths of the resulting line segments are calculated and printed.
+5. **Draw the Line Segments**: The final line segments are drawn and displayed.
+
+### Example Usage
+
+To run the main function, use the following command:
+
+#### Linux
+```sh
+./gradlew run
+```
+
+#### Windows
+```sh
+gradlew.bat run
+```

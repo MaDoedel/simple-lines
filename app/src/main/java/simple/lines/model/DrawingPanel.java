@@ -24,8 +24,10 @@ public class DrawingPanel extends JPanel {
         Graphics2D g2d = (Graphics2D) g;
         Random rand = new Random();
 
+        // Flip the y-axis to adjust for the inverted coordinate system
         g2d.translate(0, getHeight());
         g2d.scale(1, -1);
+
 
         for (List<Point> segment : reworkedLineSegments) {
             // Set a random color for each segment
